@@ -53,3 +53,4 @@ const handleOpenAbout = () => {
     <AboutModal v-model:open="isAboutModalOpen" />
   </div>
 </template>
+sim, 
