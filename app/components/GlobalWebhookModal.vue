@@ -119,10 +119,10 @@ const saveGlobalWebhook = async () => {
     return
   }
 
-  if (!form.value.url || form.value.events.length === 0) {
+  if (form.value.events.length === 0) {
     toast.add({
       title: 'Dados obrigatórios',
-      description: 'URL e pelo menos um evento são obrigatórios',
+      description: 'Pelo menos um evento é obrigatório',
       icon: 'i-lucide-alert-circle',
       color: 'warning'
     })
@@ -140,7 +140,7 @@ const saveGlobalWebhook = async () => {
         'Accept': 'application/json'
       },
       body: {
-        url: form.value.url,
+        url: form.value.url || '',
         events: form.value.events,
         excludeMessages: form.value.excludeMessages,
         addUrlEvents: form.value.addUrlEvents,
@@ -362,17 +362,6 @@ onMounted(() => {
             >
               {{ currentWebhook.enabled ? 'Desabilitar' : 'Habilitar' }}
             </UButton>
-            
-            <UButton
-              color="error"
-              variant="outline"
-              size="sm"
-              icon="i-lucide-trash-2"
-              :loading="isSaving"
-              @click="removeGlobalWebhook"
-            >
-              Remover
-            </UButton>
           </div>
         </div>
 
@@ -385,13 +374,16 @@ onMounted(() => {
           <!-- URL -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              URL do Webhook *
+              URL do Webhook
             </label>
             <UInput
               v-model="form.url"
-              placeholder="https://meusite.com/webhook-global"
+              placeholder="https://meusite.com/webhook-global (opcional)"
               class="w-full"
             />
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Deixe em branco para desabilitar o envio de eventos
+            </p>
           </div>
 
           <!-- Eventos -->
@@ -522,7 +514,7 @@ onMounted(() => {
         <UButton
           color="primary"
           :loading="isSaving"
-          :disabled="!form.url || form.events.length === 0"
+          :disabled="form.events.length === 0"
           @click="saveGlobalWebhook"
         >
           {{ isSaving ? 'Salvando...' : 'Salvar Webhook Global' }}

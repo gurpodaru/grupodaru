@@ -55,6 +55,16 @@ const handleLogout = async () => {
 
     <template #right>
       <div class="flex items-center space-x-2">
+        <!-- Botão de perfil (só aparece se tiver usuário logado) -->
+        <UButton
+          v-if="user"
+          @click="navigateTo('/perfil')"
+          variant="ghost"
+          color="neutral"
+          icon="i-heroicons-user-circle"
+          aria-label="Perfil"
+        />
+        
         <!-- Botão de logout (só aparece se tiver usuário logado) -->
         <UButton
           v-if="user"

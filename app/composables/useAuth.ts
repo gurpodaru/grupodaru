@@ -33,10 +33,19 @@ export const useAuth = () => {
     if (error) throw error
   }
 
+  // Atualizar senha
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    })
+    if (error) throw error
+  }
+
   return {
     user,
     signUp,
     signIn,
-    signOut
+    signOut,
+    updatePassword
   }
 }

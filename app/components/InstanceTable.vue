@@ -32,6 +32,9 @@ const emit = defineEmits<{
 // Estado para o filtro de pesquisa
 const searchQuery = ref('')
 
+// Estado para o filtro de status
+const statusFilter = ref<'all' | 'connected' | 'disconnected'>('all')
+
 // Removed modal state variables - now using navigation
 
 // Stores Pinia
@@ -58,7 +61,16 @@ function openInstancePage(row: TableRow<Instance>) {
 
 // Computed para filtrar instâncias por nome, perfil ou token
 const filteredInstances = computed(() => {
-  return instancesStore.filteredInstances(searchQuery.value)
+  let filtered = instancesStore.filteredInstances(searchQuery.value)
+  
+  // Aplicar filtro de status
+  if (statusFilter.value !== 'all') {
+    filtered = filtered.filter((instance: Instance) => 
+      instance.status.toLowerCase() === statusFilter.value
+    )
+  }
+  
+  return filtered
 })
 
 // Estado para controlar a ordenação
@@ -294,6 +306,36 @@ const handleInstanceUpdated = () => {
       <UBadge variant="subtle" color="neutral">
         {{ statusCounts.total }} total
       </UBadge>
+    </div>
+
+    <!-- Filtros de Status -->
+    <div v-if="!loading && !error && props.instances.length > 0" class="flex gap-2">
+      <UButton
+        :color="statusFilter === 'all' ? 'primary' : 'neutral'"
+        :variant="statusFilter === 'all' ? 'solid' : 'ghost'"
+        size="sm"
+        @click="statusFilter = 'all'"
+      >
+        Todas ({{ props.instances.length }})
+      </UButton>
+      <UButton
+        :color="statusFilter === 'connected' ? 'success' : 'neutral'"
+        :variant="statusFilter === 'connected' ? 'solid' : 'ghost'"
+        size="sm"
+        icon="i-heroicons-check-circle"
+        @click="statusFilter = 'connected'"
+      >
+        Conectadas ({{ statusCounts.connected }})
+      </UButton>
+      <UButton
+        :color="statusFilter === 'disconnected' ? 'error' : 'neutral'"
+        :variant="statusFilter === 'disconnected' ? 'solid' : 'ghost'"
+        size="sm"
+        icon="i-heroicons-x-circle"
+        @click="statusFilter = 'disconnected'"
+      >
+        Desconectadas ({{ statusCounts.disconnected }})
+      </UButton>
     </div>
 
     <!-- Campo de pesquisa e botões -->
