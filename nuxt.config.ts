@@ -8,7 +8,13 @@ export default defineNuxtConfig({
   ],
 
   supabase: {
-    types: './types/database.types.ts'
+    types: './types/database.types.ts',
+    redirectOptions: {
+      login: '/login',
+      callback: '/confirm',
+      exclude: ['/conectar/*'], // Libera todas as páginas /conectar/[data]
+      saveRedirectToCookie: false
+    }
   },
 
   devtools: {
