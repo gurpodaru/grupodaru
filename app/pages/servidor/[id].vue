@@ -7,9 +7,10 @@ import { useInstancesStore } from '../../stores/instances'
 const route = useRoute()
 const serverId = route.params.id as string
 
-// Buscar servidor pelo ID
-const { servers } = useServers()
-const server = computed(() => servers.value.find(s => s.id === serverId))
+// Buscar servidor diretamente do banco por ID
+const { getServerById } = useServers()
+const server = ref<Server | null>(null)
+const loading = ref(true)
 
 // Stores Pinia
 const instancesStore = useInstancesStore()
@@ -17,28 +18,23 @@ const instancesStore = useInstancesStore()
 // Toast para notificações
 const toast = useToast()
 
-// Se servidor não encontrado, redirecionar para home
-watchEffect(() => {
-  if (servers.value.length > 0 && !server.value) {
+// Buscar servidor quando a página carregar
+onMounted(async () => {
+  loading.value = true
+  server.value = await getServerById(serverId)
+  loading.value = false
+  
+  // Se não encontrou o servidor, redirecionar
+  if (!server.value) {
     throw createError({
       statusCode: 404,
       statusMessage: 'Servidor não encontrado'
     })
   }
-})
-
-useHead({
-  title: computed(() => server.value ? `${server.value.nome} - Detalhes do Servidor` : 'Carregando...')
-})
-
-// Carregar instâncias apenas uma vez quando a página for montada
-onMounted(async () => {
-  // Aguardar os servidores carregarem
-  await nextTick()
   
-  if (server.value && server.value.serverUrl && server.value.adminToken) {
+  // Carregar instâncias
+  if (server.value.serverUrl && server.value.adminToken) {
     console.log('Página do servidor montada, verificando necessidade de buscar instâncias...')
-    // Só buscar se realmente não há dados
     if (instancesStore.instances.length === 0) {
       console.log('Nenhuma instância no store, buscando...')
       instancesStore.fetchInstancesIfNeeded(server.value.serverUrl, server.value.adminToken)
@@ -46,6 +42,10 @@ onMounted(async () => {
       console.log('Instâncias já existem no store, pulando busca')
     }
   }
+})
+
+useHead({
+  title: computed(() => server.value ? `${server.value.nome} - Detalhes do Servidor` : 'Carregando...')
 })
 
 // Estados para mostrar/esconder token e controlar cópia
@@ -189,7 +189,7 @@ const handleCreateInstanceSubmit = async (instanceData: CreateInstanceRequest) =
   <NuxtLayout name="default-layout">
     <div class="container mx-auto px-4 py-8">
       <!-- Loading state -->
-      <div v-if="!server" class="flex items-center justify-center py-12">
+      <div v-if="loading || !server" class="flex items-center justify-center py-12">
         <div class="text-center">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p class="text-gray-600 dark:text-gray-400">Carregando servidor...</p>

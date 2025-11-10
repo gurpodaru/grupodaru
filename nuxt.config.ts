@@ -3,8 +3,13 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui',
-    '@pinia/nuxt'
+    '@pinia/nuxt',
+    '@nuxtjs/supabase'
   ],
+
+  supabase: {
+    types: './types/database.types.ts'
+  },
 
   devtools: {
     enabled: true

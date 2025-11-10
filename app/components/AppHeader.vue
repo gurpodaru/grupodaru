@@ -1,10 +1,21 @@
 <script setup lang="ts">
 // Componente Header da aplicação
+const { signOut, user } = useAuth()
 
 // Define os eventos que o componente pode emitir
 defineEmits<{
   'open-about': []
 }>()
+
+// Handler para logout
+const handleLogout = async () => {
+  try {
+    await signOut()
+    await navigateTo('/login')
+  } catch (error) {
+    console.error('Erro ao fazer logout:', error)
+  }
+}
 </script>
 
 <template>
@@ -44,6 +55,16 @@ defineEmits<{
 
     <template #right>
       <div class="flex items-center space-x-2">
+        <!-- Botão de logout (só aparece se tiver usuário logado) -->
+        <UButton
+          v-if="user"
+          @click="handleLogout"
+          variant="ghost"
+          color="neutral"
+          icon="i-lucide-log-out"
+          aria-label="Sair"
+        />
+        
         <!-- Botão de modo escuro -->
         <UColorModeButton />
         

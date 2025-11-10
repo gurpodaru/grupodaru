@@ -5,6 +5,9 @@ export default defineAppConfig({
       neutral: 'slate'
     },
     input: {
+      slots: {
+        root: 'w-full'
+      },
       defaultVariants: {
         size: 'lg'
       }

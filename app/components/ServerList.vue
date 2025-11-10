@@ -14,6 +14,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   deleteServer: [serverId: string]
   viewDetails: [server: Server]
+  editServer: [server: Server]
 }>()
 
 const handleDelete = (serverId: string) => {
@@ -22,6 +23,10 @@ const handleDelete = (serverId: string) => {
 
 const handleDetails = (server: Server) => {
   emit('viewDetails', server)
+}
+
+const handleEdit = (server: Server) => {
+  emit('editServer', server)
 }
 
 const handleCardClick = (server: Server) => {
@@ -125,6 +130,16 @@ const toggleTokenVisibility = (serverId: string) => {
 
         <template #footer>
           <div class="flex gap-2 justify-end">
+            <UButton 
+              size="sm" 
+              color="neutral" 
+              variant="ghost"
+              icon="i-lucide-pencil"
+              class="cursor-pointer"
+              @click.stop="handleEdit(server)"
+            >
+              Editar
+            </UButton>
             <UButton 
               size="sm" 
               color="error" 

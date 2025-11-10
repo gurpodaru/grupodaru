@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import type { CreateServerRequest } from '../../shared/types/Server'
+import type { CreateServerRequest, Server } from '../../shared/types/Server'
+
+// Props
+interface Props {
+  server?: Server | null
+}
+
+const props = defineProps<Props>()
 
 // Props e Emits seguindo padrão v-model
 const open = defineModel<boolean>('open', { default: false })
@@ -17,6 +24,10 @@ const form = ref<CreateServerRequest>({
 
 // Estado para mostrar/esconder senha
 const showPassword = ref(false)
+
+// Título dinâmico
+const modalTitle = computed(() => props.server ? 'Editar Servidor' : 'Adicionar Servidor')
+const submitButtonText = computed(() => props.server ? 'Salvar' : 'Adicionar')
 
 // Validação
 const isFormValid = computed(() => {
@@ -40,13 +51,23 @@ const handleSubmit = () => {
   open.value = false
 }
 
-// Resetar form quando modal fechar
-watch(open, (newValue) => {
-  if (!newValue) {
-    form.value = {
-      nome: '',
-      serverUrl: '',
-      adminToken: ''
+// Resetar e preencher form quando modal abrir
+watch(open, (isOpen) => {
+  if (isOpen) {
+    if (props.server) {
+      // Modo edição - preencher com dados do servidor
+      form.value = {
+        nome: props.server.nome,
+        serverUrl: props.server.serverUrl,
+        adminToken: props.server.adminToken || ''
+      }
+    } else {
+      // Modo adicionar - limpar form
+      form.value = {
+        nome: '',
+        serverUrl: '',
+        adminToken: ''
+      }
     }
   }
 })
@@ -55,7 +76,7 @@ watch(open, (newValue) => {
 <template>
   <UModal 
     v-model:open="open"
-    title="Adicionar Servidor"
+    :title="modalTitle"
   >
     <template #body>
       <div class="flex flex-col gap-6">
@@ -116,7 +137,7 @@ watch(open, (newValue) => {
           @click="handleSubmit"
           :disabled="!isFormValid"
         >
-          Adicionar
+          {{ submitButtonText }}
         </UButton>
       </div>
     </template>

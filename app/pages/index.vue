@@ -7,13 +7,14 @@ useHead({
 })
 
 // Usar o composable para gerenciar servidores
-const { servers, loadServers, addServer, deleteServer } = useServers()
+const { servers, loadServers, addServer, deleteServer, updateServer } = useServers()
 const loading = ref(false)
 
 // Estados dos modais
 const isModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
 const serverToDelete = ref<string | null>(null)
+const serverToEdit = ref<Server | null>(null)
 
 // Handlers dos eventos
 const handleDeleteServer = (serverId: string) => {
@@ -21,9 +22,14 @@ const handleDeleteServer = (serverId: string) => {
   isDeleteModalOpen.value = true
 }
 
-const confirmDelete = () => {
+const handleEditServer = (server: Server) => {
+  serverToEdit.value = server
+  isModalOpen.value = true
+}
+
+const confirmDelete = async () => {
   if (serverToDelete.value) {
-    deleteServer(serverToDelete.value)
+    await deleteServer(serverToDelete.value)
     serverToDelete.value = null
   }
 }
@@ -34,12 +40,20 @@ const handleViewDetails = (server: Server) => {
 }
 
 const handleAddServer = () => {
+  serverToEdit.value = null
   isModalOpen.value = true
 }
 
-const handleModalSubmit = (serverData: CreateServerRequest) => {
-  addServer(serverData)
+const handleModalSubmit = async (serverData: CreateServerRequest) => {
+  if (serverToEdit.value) {
+    // Editar servidor existente
+    await updateServer(serverToEdit.value.id, serverData)
+  } else {
+    // Adicionar novo servidor
+    await addServer(serverData)
+  }
   isModalOpen.value = false
+  serverToEdit.value = null
 }
 </script>
 
@@ -77,12 +91,14 @@ const handleModalSubmit = (serverData: CreateServerRequest) => {
         :loading="loading"
         @delete-server="handleDeleteServer"
         @view-details="handleViewDetails"
+        @edit-server="handleEditServer"
       />
     </div>
 
-    <!-- Modal para adicionar servidor -->
+    <!-- Modal para adicionar/editar servidor -->
     <ServerModal
       v-model:open="isModalOpen"
+      :server="serverToEdit"
       @submit="handleModalSubmit"
     />
 

@@ -1,72 +1,169 @@
 import type { Server, CreateServerRequest } from '../../shared/types/Server'
 
-// Composable para gerenciar servidores no localStorage
+// Helper para forçar tipo do Supabase
+const forceSupabaseInsert = (supabase: any, table: string) => {
+  return {
+    insert: (data: any) => supabase.from(table).insert(data),
+    update: (data: any) => supabase.from(table).update(data)
+  }
+}
+
+// Composable para gerenciar servidores no Supabase
 export const useServers = () => {
-  const STORAGE_KEY = 'servers'
+  const supabase = useSupabaseClient()
   
   // Estado reativo dos servidores
   const servers = ref<Server[]>([])
+  const loading = ref(false)
 
-  // Ler servidores do localStorage
-  const loadServers = () => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY)
-        if (stored) {
-          servers.value = JSON.parse(stored)
-        }
-      } catch (error) {
-        console.error('Erro ao carregar servidores:', error)
-      }
-    }
-  }
+  // Buscar servidores
+  const loadServers = async () => {
+    loading.value = true
+    try {
+      const { data, error } = await supabase
+        .from('servidores')
+        .select('*')
+        .order('created_at', { ascending: false })
 
-  // Salvar no localStorage
-  const saveToStorage = () => {
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(servers.value))
-      } catch (error) {
-        console.error('Erro ao salvar servidores:', error)
-      }
+      if (error) throw error
+      
+      servers.value = (data || []).map((item: any) => ({
+        id: item.id.toString(),
+        nome: item.nome,
+        serverUrl: item.server_url,
+        adminToken: item.admin_token,
+        status: 'offline'
+      }))
+    } catch (error) {
+      console.error('Erro ao carregar servidores:', error)
+    } finally {
+      loading.value = false
     }
   }
 
   // Inserir novo servidor
-  const addServer = (serverData: CreateServerRequest): Server => {
-    const newServer: Server = {
-      id: Date.now().toString(),
-      nome: serverData.nome,
-      serverUrl: serverData.serverUrl,
-      adminToken: serverData.adminToken,
-      status: 'offline'
+  const addServer = async (serverData: CreateServerRequest) => {
+    try {
+      const helper = forceSupabaseInsert(supabase, 'servidores')
+      const { data, error } = await helper.insert([{
+        nome: serverData.nome,
+        server_url: serverData.serverUrl,
+        admin_token: serverData.adminToken
+      }])
+        .select()
+        .single()
+
+      if (error) throw error
+
+      const item = data as any
+      const newServer: Server = {
+        id: item.id.toString(),
+        nome: item.nome,
+        serverUrl: item.server_url,
+        adminToken: item.admin_token,
+        status: 'offline'
+      }
+      
+      servers.value.unshift(newServer)
+      return newServer
+    } catch (error) {
+      console.error('Erro ao adicionar servidor:', error)
+      return null
     }
-    
-    servers.value.push(newServer)
-    saveToStorage()
-    return newServer
   }
 
   // Excluir servidor
-  const deleteServer = (serverId: string): boolean => {
-    const index = servers.value.findIndex(server => server.id === serverId)
-    if (index !== -1) {
-      servers.value.splice(index, 1)
-      saveToStorage()
+  const deleteServer = async (serverId: string) => {
+    try {
+      const { error } = await supabase
+        .from('servidores')
+        .delete()
+        .eq('id', serverId)
+
+      if (error) throw error
+
+      servers.value = servers.value.filter(server => server.id !== serverId)
       return true
+    } catch (error) {
+      console.error('Erro ao excluir servidor:', error)
+      return false
     }
-    return false
   }
 
-  // Inicializar no cliente
+  // Buscar servidor por ID
+  const getServerById = async (serverId: string): Promise<Server | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('servidores')
+        .select('*')
+        .eq('id', serverId)
+        .single()
+
+      if (error) throw error
+
+      const item = data as any
+      return {
+        id: item.id.toString(),
+        nome: item.nome,
+        serverUrl: item.server_url,
+        adminToken: item.admin_token,
+        status: 'offline'
+      }
+    } catch (error) {
+      console.error('Erro ao buscar servidor:', error)
+      return null
+    }
+  }
+
+  // Atualizar servidor
+  const updateServer = async (serverId: string, serverData: CreateServerRequest) => {
+    try {
+      const helper = forceSupabaseInsert(supabase, 'servidores')
+      const { data, error } = await helper.update({
+        nome: serverData.nome,
+        server_url: serverData.serverUrl,
+        admin_token: serverData.adminToken
+      })
+        .eq('id', serverId)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      const item = data as any
+      const updatedServer: Server = {
+        id: item.id.toString(),
+        nome: item.nome,
+        serverUrl: item.server_url,
+        adminToken: item.admin_token,
+        status: 'offline'
+      }
+      
+      // Atualizar na lista local
+      const index = servers.value.findIndex(s => s.id === serverId)
+      if (index !== -1) {
+        servers.value[index] = updatedServer
+      }
+      
+      return updatedServer
+    } catch (error) {
+      console.error('Erro ao atualizar servidor:', error)
+      return null
+    }
+  }
+
+  // Carregar quando montar
   onMounted(() => {
     loadServers()
   })
 
   return {
     servers,
+    loading,
     loadServers,
     addServer,
-    deleteServer
+    deleteServer,
+    getServerById,
+    updateServer
   }
 }
