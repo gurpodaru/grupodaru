@@ -113,11 +113,52 @@ const columns: TableColumn<Instance>[] = [
     }
   },
   {
+    accessorKey: 'created',
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted()
+      
+      return h(UButton, {
+        color: 'neutral',
+        variant: 'ghost',
+        label: 'Criada em',
+        icon: isSorted ? (isSorted === 'asc' ? 'i-lucide-arrow-up-narrow-wide' : 'i-lucide-arrow-down-wide-narrow') : 'i-lucide-arrow-up-down',
+        class: '-mx-2.5',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
+      })
+    },
+    cell: ({ row }) => {
+      const instance = row.original
+      const createdDate = new Date(instance.created)
+      
+      return h('div', { class: 'text-sm' }, [
+        h('div', { class: 'font-medium' }, createdDate.toLocaleDateString('pt-BR')),
+        h('div', { class: 'text-xs text-gray-500 dark:text-gray-400' }, 
+          createdDate.toLocaleTimeString('pt-BR', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          })
+        )
+      ])
+    },
+    meta: {
+      class: {
+        th: 'w-28',
+        td: 'w-28'
+      }
+    }
+  },
+  {
     accessorKey: 'owner',
     header: 'Número',
     cell: ({ row }) => {
       const instance = row.original
       return h('div', { class: 'font-mono text-sm' }, instance.owner)
+    },
+    meta: {
+      class: {
+        th: 'w-36',
+        td: 'w-36'
+      }
     }
   },
   {
@@ -136,12 +177,12 @@ const columns: TableColumn<Instance>[] = [
     },
     cell: ({ row }) => {
       const instance = row.original
-      return h('div', { class: 'font-medium max-w-32 truncate' }, instance.name)
+      return h('div', { class: 'font-medium max-w-56 truncate' }, instance.name)
     },
     meta: {
       class: {
-        th: 'w-32',
-        td: 'w-32'
+        th: 'w-56',
+        td: 'w-56'
       }
     }
   },
@@ -182,40 +223,11 @@ const columns: TableColumn<Instance>[] = [
         variant: 'subtle',
         class: 'capitalize'
       }, () => getStatusLabel(instance.status))
-    }
-  },
-  {
-    accessorKey: 'created',
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted()
-      
-      return h(UButton, {
-        color: 'neutral',
-        variant: 'ghost',
-        label: 'Criada em',
-        icon: isSorted ? (isSorted === 'asc' ? 'i-lucide-arrow-up-narrow-wide' : 'i-lucide-arrow-down-wide-narrow') : 'i-lucide-arrow-up-down',
-        class: '-mx-2.5',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
-      })
-    },
-    cell: ({ row }) => {
-      const instance = row.original
-      const createdDate = new Date(instance.created)
-      
-      return h('div', { class: 'text-sm' }, [
-        h('div', { class: 'font-medium' }, createdDate.toLocaleDateString('pt-BR')),
-        h('div', { class: 'text-xs text-gray-500 dark:text-gray-400' }, 
-          createdDate.toLocaleTimeString('pt-BR', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          })
-        )
-      ])
     },
     meta: {
       class: {
-        th: 'w-28',
-        td: 'w-28'
+        th: 'w-32',
+        td: 'w-32'
       }
     }
   },
