@@ -14,11 +14,6 @@ export default defineNuxtConfig({
       callback: '/confirm',
       exclude: ['/conectar/*'], // Libera todas as páginas /conectar/[data]
       saveRedirectToCookie: false
-    },
-    cookieOptions: {
-      maxAge: 60 * 60 * 8, // 8 horas
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production' // true apenas em produção
     }
   },
 
@@ -29,7 +24,7 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   routeRules: {
-    '/': { prerender: true }
+    '/': { ssr: true, prerender: false } // Força SSR sempre na home
   },
 
   compatibilityDate: '2025-01-15',
